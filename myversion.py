@@ -37,7 +37,7 @@ class Main:
         self.final_epsilon = 0.0001
         self.batch_size = 32
         self.observe = 10
-        self.explore = 10
+        self.explore = 1000
         self.frame_per_action = 4
         self.update_target_freq = 100
         self.timestep_per_train = 100
@@ -72,7 +72,7 @@ class Main:
     def replay_memory(self, s_t, action, r_t, s_t1, is_terminated, t):
         self.memory.append((s_t, action, r_t, s_t1, is_terminated))
         if self.epsilon > self.final_epsilon and t > self.observe:
-            self.epsilon -= (self.initial_epsilon - self.final_epsilon) / self.explore
+            self.epsilon = self.final_epsilon + (self.initial_epsilon - self.final_epsilon) * math.exp(-t/self.explore)
         if len(self.memory) > self.max_memory:
             self.memory.popleft()
         if t % self.update_target_freq == 0:
@@ -83,7 +83,6 @@ class Main:
         replay_samples = random.sample(self.memory, num_samples)
         state_inputs = np.zeros(((num_samples,) + self.state_size))
         next_states = np.zeros(((num_samples,) + self.state_size))
-#        m_prob = [np.zeros((num_samples, self.num_atoms)) for i in range(num_actions)]
         action, reward, done = [], [], []
         for i in range(num_samples):
             state_inputs[i,:,:,:] = replay_samples[i][0]
