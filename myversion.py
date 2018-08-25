@@ -35,7 +35,7 @@ class Main:
         self.epsilon = 1.0
         self.Max_t = Max_t
         self.initial_epsilon = 1.0
-        self.final_epsilon = 0.01
+        self.final_epsilon = 0.0001
         self.batch_size = 32
         self.observe = 100
         self.explore = 1000
