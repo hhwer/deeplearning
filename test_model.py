@@ -1,3 +1,4 @@
+
 from __future__ import print_function
 import random
 import numpy as np
@@ -26,20 +27,18 @@ def q_network(input_shape, num_atoms, num_actions, lr):
     return model
 
 class Main:
-    def __init__(self, game, state_size, num_actions, num_atoms, Max_t):
+    def __init__(self, game, state_size, num_actions, num_atoms):
         self.game = game
         self.state_size = state_size
         self.num_actions = num_actions
         self.gamma = 0.99
         self.lr = 0.0001
         self.epsilon = 1.0
-        self.Max_t = Max_t
         self.initial_epsilon = 1.0
         self.final_epsilon = 0.0001
         self.batch_size = 32
         self.observe = 100
         self.explore = 1000
-        self.explore_frac = 0.1
         self.frame_per_action = 4
         self.update_target_freq = 1000
         self.timestep_per_train = 4
@@ -74,7 +73,7 @@ class Main:
     def replay_memory(self, s_t, action, r_t, s_t1, is_terminated, t):
         self.memory.append((s_t, action, r_t, s_t1, is_terminated))
         if self.epsilon > self.final_epsilon and t > self.observe:
-            self.epsilon = self.initial_epsilon - (self.initial_epsilon - self.final_epsilon) * min(1,t / (self.explore_frac * self.Max_t))
+            self.epsilon = self.final_epsilon + (self.initial_epsilon - self.final_epsilon) * math.exp(-t/self.explore)
         if len(self.memory) > self.max_memory:
             self.memory.popleft()
         if t % self.update_target_freq == 0:
@@ -121,69 +120,46 @@ class Main:
 if __name__ == '__main__':
     games = ['Atlantis-v0', 'Alien-v0', 'Amidar-v0', 'Berzerk-v0', 'CrazyClimber-v0']
     games = ['Atlantis-v0']
-    filename = 'result.txt'
-    file = open(filename,'w')
     for game in games:
-        Max_t = 5000
+        Max_t = 100000
         env = gym.make(game)
         x_t = env.reset()
         num_actions = env.action_space.n
         rows, cols, channels = x_t.shape
         num_atoms = 51
         state_size = (rows, cols, channels)
-        agent = Main(game, state_size, num_actions, num_atoms, Max_t)
+        agent = Main(game, state_size, num_actions, num_atoms)
         agent.model = q_network(state_size, num_atoms, num_actions, agent.lr)
         agent.target_model = q_network(state_size, num_atoms, num_actions, agent.lr)
-        file.write(str(game) + ': ')
-        if len(sys.argv)>1 and sys.argv[1] == 'load':
-            print('Load model')
-            agent.model.load_weights('./weights.dxh')
+        print('Load model')
+        agent.model.load_weights('./weights.dxh')
         is_terminated = 0
         epsilon = agent.initial_epsilon
         GAME = 0
         t = 0
         R = 0
+        x_t = np.reshape(x_t, (1, rows, cols, channels))
         while GAME < agent.episodes:
             loss = 0
             a_t = np.zeros([num_actions])
-            action_idx  = agent.choose_action(x_t)
+            action_idx  = agent.choose_optimal_action(x_t)
             a_t[action_idx] = 1
             a_t = a_t.astype(int)
             x_t1, r_t, is_terminated, info = env.step(action_idx)
 #            env.render()
             R += r_t
             if t % 10 == 0:
-                print(t, R, agent.epsilon)
+                print(t, R)
             if (is_terminated):
                 GAME += 1
                 print ('Episode Finish ', GAME)
-                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + 'explore=' + str(agent.epsilon)  + '),\n'
-                file.write(result)
                 x_t1 = env.reset()
             x_t1 = np.reshape(x_t1, (1, rows, cols, channels))
-            agent.replay_memory(x_t, action_idx, r_t, x_t1, is_terminated, t)
-            if t > agent.observe and t % agent.timestep_per_train == 0:
-                loss = agent.train()
             x_t = x_t1
             t += 1
-            if t % 1000 == 0:
-                print('Save model')
-                agent.model.save_weights('./weights.dxh', overwrite=True)
-            state = ''
-            if t <= agent.observe:
-                state = 'observe'
-            elif t > agent.observe and t <= agent.observe + agent.explore:
-                state = 'explore'
-            else:
-                state = 'train'
             if (is_terminated):
-                print('TIME', t, '/ GAME', GAME, '/ STATE', state,'/ Reward',R,'/ explore',agent.explore)
+                print('TIME', t, '/ GAME', GAME, '/ Reward',R)
                 R = 0
             if t >= Max_t:
                 print('Write result and break')
-#                result = game + ',' + str(R) + ',' + str(t) + '\n'
-                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
-                file.write(result)
                 break
-        result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
-        file.write(result)
