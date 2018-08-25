@@ -35,7 +35,7 @@ class Main:
         self.epsilon = 1.0
         self.Max_t = Max_t
         self.initial_epsilon = 1.0
-        self.final_epsilon = 0.0001
+        self.final_epsilon = 0.01
         self.batch_size = 32
         self.observe = 100
         self.explore = 1000
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     filename = 'result.txt'
     file = open(filename,'w')
     for game in games:
-        Max_t = 5000
+        Max_t = 100000
         env = gym.make(game)
         x_t = env.reset()
         num_actions = env.action_space.n
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         agent = Main(game, state_size, num_actions, num_atoms, Max_t)
         agent.model = q_network(state_size, num_atoms, num_actions, agent.lr)
         agent.target_model = q_network(state_size, num_atoms, num_actions, agent.lr)
-        file.write(str(game) + ': ')
+        file.write(str(game) + ':\n')
         if len(sys.argv)>1 and sys.argv[1] == 'load':
             print('Load model')
             agent.model.load_weights('./weights.dxh')
@@ -157,7 +157,8 @@ if __name__ == '__main__':
             if (is_terminated):
                 GAME += 1
                 print ('Episode Finish ', GAME)
-                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + 'explore=' + str(agent.epsilon)  + '),\n'
+                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ' explore=' + str(agent.epsilon)  + '),\n'
+            
                 file.write(result)
                 x_t1 = env.reset()
             x_t1 = np.reshape(x_t1, (1, rows, cols, channels))
@@ -185,5 +186,3 @@ if __name__ == '__main__':
                 result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
                 file.write(result)
                 break
-        result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
-        file.write(result)

@@ -120,6 +120,8 @@ class Main:
 if __name__ == '__main__':
     games = ['Atlantis-v0', 'Alien-v0', 'Amidar-v0', 'Berzerk-v0', 'CrazyClimber-v0']
     games = ['Atlantis-v0']
+    filename = 'Result_test.txt'
+    file = open(filename,'w')
     for game in games:
         Max_t = 100000
         env = gym.make(game)
@@ -131,6 +133,7 @@ if __name__ == '__main__':
         agent = Main(game, state_size, num_actions, num_atoms)
         agent.model = q_network(state_size, num_atoms, num_actions, agent.lr)
         agent.target_model = q_network(state_size, num_atoms, num_actions, agent.lr)
+        file.write(str(game) + ':\n')
         print('Load model')
         agent.model.load_weights('./weights.dxh')
         is_terminated = 0
@@ -148,11 +151,13 @@ if __name__ == '__main__':
             x_t1, r_t, is_terminated, info = env.step(action_idx)
 #            env.render()
             R += r_t
-            if t % 10 == 0:
+            if t % 100 == 0:
                 print(t, R)
             if (is_terminated):
                 GAME += 1
                 print ('Episode Finish ', GAME)
+                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ' explore=' + str(agent.epsilon)  + '),\n'
+                file.write(result)
                 x_t1 = env.reset()
             x_t1 = np.reshape(x_t1, (1, rows, cols, channels))
             x_t = x_t1
@@ -162,4 +167,6 @@ if __name__ == '__main__':
                 R = 0
             if t >= Max_t:
                 print('Write result and break')
+                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
+                file.write(result)
                 break
