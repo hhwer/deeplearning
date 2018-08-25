@@ -35,22 +35,22 @@ class Main:
         self.epsilon = 1.0
         self.Max_t = Max_t
         self.initial_epsilon = 1.0
-        self.final_epsilon = 0.0001
+        self.final_epsilon = 0.01
         self.batch_size = 32
         self.observe = 100
         self.explore = 1000
         self.explore_frac = 0.1
         self.frame_per_action = 4
-        self.update_target_freq = 1000
+        self.update_target_freq = 200
         self.timestep_per_train = 4
-        self.episodes = 100
+        self.episodes = 300
         self.num_atoms = num_atoms
         self.v_max = 10
         self.v_min = -10
         self.delta_z = (self.v_max - self.v_min) / float(self.num_atoms - 1)
         self.z = [self.v_min + i * self.delta_z for i in range(self.num_atoms)]
         self.memory = collections.deque()
-        self.max_memory = 1000
+        self.max_memory = 2000
         self.model = None
         self.target_model = None
 
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     filename = 'result.txt'
     file = open(filename,'w')
     for game in games:
-        Max_t = 100000
+        Max_t = 400000
         env = gym.make(game)
         x_t = env.reset()
         num_actions = env.action_space.n
