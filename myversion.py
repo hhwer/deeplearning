@@ -102,6 +102,9 @@ class Main:
         q = q.reshape((num_samples, num_actions), order='F')
         optimal_action = np.argmax(q, axis=1)
         for i in range(num_samples):
+            for j in range(num_atoms):
+                m_prob[action[i]][i][j] = 0
+        for i in range(num_samples):
             if done[i]:
                 Tz = min(self.v_max, max(self.v_min, reward[i]))
                 bj = (Tz - self.v_min) / self.delta_z

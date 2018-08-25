@@ -70,52 +70,7 @@ class Main:
         action = np.argmax(q)
         return action
 
-    def replay_memory(self, s_t, action, r_t, s_t1, is_terminated, t):
-        self.memory.append((s_t, action, r_t, s_t1, is_terminated))
-        if self.epsilon > self.final_epsilon and t > self.observe:
-            self.epsilon = self.final_epsilon + (self.initial_epsilon - self.final_epsilon) * math.exp(-t/self.explore)
-        if len(self.memory) > self.max_memory:
-            self.memory.popleft()
-        if t % self.update_target_freq == 0:
-            self.update_target_model()
 
-    def train(self):
-#        num_samples = min(self.batch_size * self.timestep_per_train, len(self.memory))
-        num_samples = min(self.batch_size , len(self.memory))
-        replay_samples = random.sample(self.memory, num_samples)
-        state_inputs = np.zeros(((num_samples,) + self.state_size))
-        next_states = np.zeros(((num_samples,) + self.state_size))
-        action, reward, done = [], [], []
-        for i in range(num_samples):
-            state_inputs[i,:,:,:] = replay_samples[i][0]
-            action.append(replay_samples[i][1])
-            reward.append(replay_samples[i][2])
-            next_states[i,:,:,:] = replay_samples[i][3]
-            done.append(replay_samples[i][4])
-        z = self.model.predict(next_states)
-        z_ = self.target_model.predict(next_states)
-        m_prob = self.model.predict(state_inputs)
-        optimal_action = []
-        z_concat = np.vstack(z)
-        q = np.sum(np.multiply(z_concat, np.array(self.z)), axis=1) # length (num_atoms x num_actions)
-        q = q.reshape((num_samples, num_actions), order='F')
-        optimal_action = np.argmax(q, axis=1)
-        for i in range(num_samples):
-            if done[i]:
-                Tz = min(self.v_max, max(self.v_min, reward[i]))
-                bj = (Tz - self.v_min) / self.delta_z
-                m_l, m_u = math.floor(bj), math.ceil(bj)
-                m_prob[action[i]][i][int(m_l)] += (m_u - bj)
-                m_prob[action[i]][i][int(m_u)] += (bj - m_l)
-            else:
-                for j in range(self.num_atoms):
-                    Tz = min(self.v_max, max(self.v_min, reward[i] + self.gamma * self.z[j]))
-                    bj = (Tz - self.v_min) / self.delta_z
-                    m_l, m_u = math.floor(bj), math.ceil(bj)
-                    m_prob[action[i]][i][int(m_l)] += z_[optimal_action[i]][i][j] * (m_u - bj)
-                    m_prob[action[i]][i][int(m_u)] += z_[optimal_action[i]][i][j] * (bj - m_l)
-        loss = self.model.fit(state_inputs, m_prob, batch_size=self.batch_size, epochs=1, verbose=0)
-        return loss.history['loss']
 
 if __name__ == '__main__':
     games = ['Atlantis-v0', 'Alien-v0', 'Amidar-v0', 'Berzerk-v0', 'CrazyClimber-v0']
