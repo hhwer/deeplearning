@@ -30,25 +30,25 @@ class Main:
         self.game = game
         self.state_size = state_size
         self.num_actions = num_actions
-        self.gamma = 0.80
+        self.gamma = 0.99
         self.lr = 0.0001
         self.epsilon = 1.0
         self.initial_epsilon = 1.0
         self.final_epsilon = 0.0001
         self.batch_size = 32
-        self.observe = 10
+        self.observe = 100
         self.explore = 1000
         self.frame_per_action = 4
-        self.update_target_freq = 100
-        self.timestep_per_train = 100
-        self.episodes = 50
+        self.update_target_freq = 1000
+        self.timestep_per_train = 4
+        self.episodes = 100
         self.num_atoms = num_atoms
         self.v_max = 10
         self.v_min = -10
         self.delta_z = (self.v_max - self.v_min) / float(self.num_atoms - 1)
         self.z = [self.v_min + i * self.delta_z for i in range(self.num_atoms)]
         self.memory = collections.deque()
-        self.max_memory = 5000
+        self.max_memory = 1000
         self.model = None
         self.target_model = None
 
@@ -79,7 +79,8 @@ class Main:
             self.update_target_model()
 
     def train(self):
-        num_samples = min(self.batch_size * self.timestep_per_train, len(self.memory))
+#        num_samples = min(self.batch_size * self.timestep_per_train, len(self.memory))
+        num_samples = min(self.batch_size , len(self.memory))
         replay_samples = random.sample(self.memory, num_samples)
         state_inputs = np.zeros(((num_samples,) + self.state_size))
         next_states = np.zeros(((num_samples,) + self.state_size))
@@ -117,6 +118,7 @@ class Main:
 
 if __name__ == '__main__':
     games = ['Atlantis-v0', 'Alien-v0', 'Amidar-v0', 'Berzerk-v0', 'CrazyClimber-v0']
+    games = ['Atlantis-v0']
     filename = 'result.txt'
     file = open(filename,'w')
     for game in games:
@@ -178,7 +180,7 @@ if __name__ == '__main__':
             if t >= Max_t:
                 print('Write result and break')
 #                result = game + ',' + str(R) + ',' + str(t) + '\n'
-                result = '(episode=' + str(Game) +' Reward=' + str(R) + ' t=' + str(t) + '),'
+                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + '),'
                 file.write(result)
                 break
         result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
