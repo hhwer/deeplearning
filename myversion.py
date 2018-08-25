@@ -30,14 +30,14 @@ class Main:
         self.game = game
         self.state_size = state_size
         self.num_actions = num_actions
-        self.gamma = 0.99
+        self.gamma = 1
         self.lr = 0.0001
         self.epsilon = 1.0
         self.Max_t = Max_t
         self.initial_epsilon = 1.0
         self.final_epsilon = 0.01
         self.batch_size = 32
-        self.observe = 100
+        self.observe = 1000
         self.explore = 1000
         self.explore_frac = 0.1
         self.frame_per_action = 4
@@ -155,8 +155,8 @@ if __name__ == '__main__':
             x_t1, r_t, is_terminated, info = env.step(action_idx)
 #            env.render()
             R += r_t
-            if t % 10 == 0:
-                print(t, R, agent.epsilon)
+#            if t % 10 == 0:
+#                print(t, R, agent.epsilon)
             if (is_terminated):
                 GAME += 1
                 print ('Episode Finish ', GAME)
