@@ -45,8 +45,8 @@ class Main:
         self.timestep_per_train = 4
         self.episodes = 300
         self.num_atoms = num_atoms
-        self.v_max = 10
-        self.v_min = -10
+        self.v_max = 400
+        self.v_min = -400
         self.delta_z = (self.v_max - self.v_min) / float(self.num_atoms - 1)
         self.z = [self.v_min + i * self.delta_z for i in range(self.num_atoms)]
         self.memory = collections.deque()
@@ -155,8 +155,9 @@ if __name__ == '__main__':
             x_t1, r_t, is_terminated, info = env.step(action_idx)
 #            env.render()
             R += r_t
-#            if t % 10 == 0:
-#                print(t, R, agent.epsilon)
+#            print(r_t, R)
+            if t % 10 == 0:
+                print(t, R, agent.epsilon)
             if (is_terminated):
                 GAME += 1
                 print ('Episode Finish ', GAME)
