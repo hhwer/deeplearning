@@ -30,27 +30,27 @@ class Main:
         self.game = game
         self.state_size = state_size
         self.num_actions = num_actions
-        self.gamma = 1
+        self.gamma = 0.99
         self.lr = 0.0001
         self.epsilon = 1.0
         self.Max_t = Max_t
         self.initial_epsilon = 1.0
         self.final_epsilon = 0.01
         self.batch_size = 32
-        self.observe = 1000
-        self.explore = 1000
-        self.explore_frac = 0.1
+        self.observe = 10000
+        self.explore = 40000
+        self.explore_frac = 0.2
         self.frame_per_action = 4
-        self.update_target_freq = 200
+        self.update_target_freq = 1000
         self.timestep_per_train = 4
-        self.episodes = 300
+        self.episodes = 1000
         self.num_atoms = num_atoms
-        self.v_max = 400
-        self.v_min = -400
+        self.v_max = 1000
+        self.v_min = 0
         self.delta_z = (self.v_max - self.v_min) / float(self.num_atoms - 1)
         self.z = [self.v_min + i * self.delta_z for i in range(self.num_atoms)]
         self.memory = collections.deque()
-        self.max_memory = 2000
+        self.max_memory = 10000
         self.model = None
         self.target_model = None
 
@@ -73,8 +73,8 @@ class Main:
 
     def replay_memory(self, s_t, action, r_t, s_t1, is_terminated, t):
         self.memory.append((s_t, action, r_t, s_t1, is_terminated))
-        if self.epsilon > self.final_epsilon and t > self.observe:
-            self.epsilon = self.initial_epsilon - (self.initial_epsilon - self.final_epsilon) * min(1,t / (self.explore_frac * self.Max_t))
+        if self.epsilon > self.final_epsilon and t > self.observe+self.explore:
+            self.epsilon = self.initial_epsilon - (self.initial_epsilon - self.final_epsilon) * min(1,(t-self.observe-self.explore) / (self.explore_frac * self.Max_t))
         if len(self.memory) > self.max_memory:
             self.memory.popleft()
         if t % self.update_target_freq == 0:
@@ -123,11 +123,11 @@ class Main:
 
 if __name__ == '__main__':
     games = ['Atlantis-v0', 'Alien-v0', 'Amidar-v0', 'Berzerk-v0', 'CrazyClimber-v0']
-    games = ['Atlantis-v0']
+    games = games[1:2]
     filename = 'result.txt'
     file = open(filename,'w')
     for game in games:
-        Max_t = 400000
+        Max_t = 500000
         env = gym.make(game)
         x_t = env.reset()
         num_actions = env.action_space.n
@@ -156,14 +156,15 @@ if __name__ == '__main__':
 #            env.render()
             R += r_t
 #            print(r_t, R)
-            if t % 10 == 0:
+            if t % 100 == 0:
                 print(t, R, agent.epsilon)
             if (is_terminated):
                 GAME += 1
                 print ('Episode Finish ', GAME)
-                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ' explore=' + str(agent.epsilon)  + '),\n'
+                result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ' epsilon=' + str(agent.epsilon)  + '),\n'
             
                 file.write(result)
+                file.flush()
                 x_t1 = env.reset()
             x_t1 = np.reshape(x_t1, (1, rows, cols, channels))
             agent.replay_memory(x_t, action_idx, r_t, x_t1, is_terminated, t)
@@ -182,7 +183,7 @@ if __name__ == '__main__':
             else:
                 state = 'train'
             if (is_terminated):
-                print('TIME', t, '/ GAME', GAME, '/ STATE', state,'/ Reward',R,'/ explore',agent.explore)
+                print('TIME', t, '/ GAME', GAME, '/ STATE', state,'/ Reward',R,'/ epsilon',agent.epsilon)
                 R = 0
             if t >= Max_t:
                 print('Write result and break')
@@ -190,3 +191,4 @@ if __name__ == '__main__':
                 result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
                 file.write(result)
                 break
+    file.close()

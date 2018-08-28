@@ -74,7 +74,7 @@ class Main:
 
 if __name__ == '__main__':
     games = ['Atlantis-v0', 'Alien-v0', 'Amidar-v0', 'Berzerk-v0', 'CrazyClimber-v0']
-    games = ['Atlantis-v0']
+    games = games[1:2]
     filename = 'Result_test.txt'
     file = open(filename,'w')
     for game in games:
@@ -113,6 +113,7 @@ if __name__ == '__main__':
                 print ('Episode Finish ', GAME)
                 result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ' explore=' + str(agent.epsilon)  + '),\n'
                 file.write(result)
+                file.flush()
                 x_t1 = env.reset()
             x_t1 = np.reshape(x_t1, (1, rows, cols, channels))
             x_t = x_t1
@@ -125,3 +126,4 @@ if __name__ == '__main__':
                 result = '(episode=' + str(GAME) +' Reward=' + str(R) + ' t=' + str(t) + ')\n'
                 file.write(result)
                 break
+    file.close()
